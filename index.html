@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>秋招网申助手 · 智能求职效率插件</title>
+<meta name="description" content="一款为秋招打造的 Chrome 插件：深度适配字节、腾讯、京东、蔚来等主流校招系统，自动识别表单、一键填充简历数据，填完即停、只填不提交。" />
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#0f172a; --sub:#5b6478; --line:#e8ebf2;
+    --brand:#4f46e5; --brand2:#7c3aed; --teal:#0ea5e9; --ok:#10b981; --warn:#f59e0b;
+    --radius:18px; --shadow:0 10px 30px rgba(15,23,42,.08); --shadow-lg:0 24px 60px rgba(79,70,229,.18);
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  .grad{background:linear-gradient(120deg,var(--brand),var(--brand2))}
+  .gradtext{background:linear-gradient(120deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  /* nav */
+  header{position:sticky;top:0;z-index:50;background:rgba(246,247,251,.82);backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.2px}
+  .logo .dot{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:15px;box-shadow:var(--shadow)}
+  .nav .links{display:flex;gap:26px;font-size:14.5px;color:var(--sub);font-weight:600}
+  .nav .links a:hover{color:var(--brand)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:.2s;border:1px solid transparent}
+  .btn-primary{color:#fff;box-shadow:var(--shadow)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+  @media(max-width:760px){.nav .links{display:none}}
+
+  /* hero */
+  .hero{padding:64px 0 36px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:#eef0fe;color:var(--brand);font-weight:700;font-size:13px;padding:7px 13px;border-radius:999px;margin-bottom:18px}
+  .badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 0 rgba(79,70,229,.5);animation:p 2s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(79,70,229,.5)}70%{box-shadow:0 0 0 9px rgba(79,70,229,0)}100%{box-shadow:0 0 0 0 rgba(79,70,229,0)}}
+  h1{font-size:46px;line-height:1.18;font-weight:850;letter-spacing:-.5px;margin-bottom:18px}
+  .hero p.lead{font-size:18px;color:var(--sub);margin-bottom:28px;max-width:520px}
+  .cta{display:flex;gap:14px;flex-wrap:wrap}
+  /* mock browser */
+  .mock{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden}
+  .mock .bar{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#f1f3fa;border-bottom:1px solid var(--line)}
+  .mock .bar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .mock .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12.5px;color:var(--sub);margin-left:8px}
+  .mock .body{padding:18px}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .k{font-size:13.5px;color:var(--sub);font-weight:600}
+  .row .v{font-size:13.5px;font-weight:700}
+  .row .v.fill{color:var(--ok)}
+  .row .v.fill::before{content:"●";color:var(--ok);margin-right:6px;font-size:9px;vertical-align:middle}
+  .chip{display:inline-block;font-size:11px;background:#eef0fe;color:var(--brand);padding:2px 8px;border-radius:6px;margin-left:6px}
+  @media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:30px}h1{font-size:36px}}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:14px 0 8px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--shadow)}
+  .stat b{display:block;font-size:34px;font-weight:850;letter-spacing:-1px}
+  .stat span{font-size:14px;color:var(--sub);font-weight:600}
+  @media(max-width:760px){.stats{grid-template-columns:1fr}}
+
+  /* sections */
+  section{padding:54px 0}
+  .sec-head{text-align:center;max-width:680px;margin:0 auto 40px}
+  .sec-head .ey{color:var(--brand);font-weight:800;font-size:13.5px;letter-spacing:1.5px;text-transform:uppercase}
+  .sec-head h2{font-size:32px;font-weight:850;margin:10px 0 12px;letter-spacing:-.4px}
+  .sec-head p{color:var(--sub);font-size:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  @media(max-width:860px){.grid3,.grid2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:.2s}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#dfe3f5}
+  .card .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;color:#fff}
+  .card h3{font-size:18px;font-weight:800;margin-bottom:8px}
+  .card p{font-size:14.5px;color:var(--sub)}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:s}
+  @media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--card);border:1px solid var(--line);border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:relative;box-shadow:var(--shadow)}
+  .step .n{counter-increment:s;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;margin-bottom:14px}
+  .step .n::before{content:counter(s)}
+  .step h4{font-size:16.5px;font-weight:800;margin-bottom:6px}
+  .step p{font-size:14px;color:var(--sub)}
+
+  /* platforms */
+  .plats{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+  .plat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 18px;font-weight:700;font-size:14.5px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px}
+  .plat .b{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+
+  /* tech */
+  .tech{background:linear-gradient(135deg,#0f172a,#1e1b4b);color:#e7e9f5;border-radius:24px;padding:48px;box-shadow:var(--shadow-lg)}
+  .tech h2,.tech .ey{color:#fff}
+  .tech .ey{color:#a5b4fc;font-weight:800;font-size:13.5px;letter-spacing:1.5px;text-transform:uppercase}
+  .tech h2{font-size:30px;font-weight:850;margin:10px 0 26px}
+  .tech-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  @media(max-width:760px){.tech-grid{grid-template-columns:1fr}.tech{padding:30px}}
+  .titem{display:flex;gap:14px;align-items:flex-start}
+  .titem .ti{width:40px;height:40px;border-radius:11px;background:rgba(124,58,237,.25);display:grid;place-items:center;color:#c4b5fd;flex:none}
+  .titem h4{font-size:16px;font-weight:800;color:#fff;margin-bottom:4px}
+  .titem p{font-size:14px;color:#b9bee0}
+
+  /* cta band */
+  .band{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:46px;text-align:center;box-shadow:var(--shadow-lg)}
+  .band h2{font-size:30px;font-weight:850;margin-bottom:12px}
+  .band p{color:var(--sub);font-size:16px;margin-bottom:24px}
+  .band .cta{justify-content:center}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--sub);font-size:13.5px}
+  .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+  .foot a{color:var(--brand);font-weight:700}
+  .foot .home{background:#eef0fe;padding:8px 14px;border-radius:10px}
+  .muted{opacity:.8}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="dot grad">R</span>秋招网申助手</div>
+    <nav class="links">
+      <a href="#features">核心功能</a>
+      <a href="#how">工作方式</a>
+      <a href="#platforms">支持平台</a>
+      <a href="#tech">技术亮点</a>
+    </nav>
+    <a class="btn btn-primary grad" href="https://github.com/AriaYang-333/qiuzhao-autofill" target="_blank" rel="noopener">GitHub 源码</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="badge"><span class="pulse"></span>Chrome 插件 · MV3 · 自研开源</span>
+      <h1>把重复到崩溃的<br><span class="gradtext">网申填表</span>，交给一键自动化</h1>
+      <p class="lead">一款为秋招打造的智能求职效率插件：深度适配字节、腾讯、京东、蔚来等主流校招系统，自动识别表单结构、一键填充你的简历数据。<strong>填完即停、只填不提交。</strong></p>
+      <div class="cta">
+        <a class="btn btn-primary grad" href="https://github.com/AriaYang-333/qiuzhao-autofill/releases" target="_blank" rel="noopener">获取插件（解压加载）</a>
+        <a class="btn btn-ghost" href="#how">看看怎么用</a>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="bar">
+        <i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+        <span class="url">join.qq.com / resumeedit</span>
+      </div>
+      <div class="body">
+        <div class="row"><span class="k">姓名</span><span class="v fill">杨焰柳</span></div>
+        <div class="row"><span class="k">手机号</span><span class="v fill">138****0000</span></div>
+        <div class="row"><span class="k">最高学历</span><span class="v fill">本科<span class="chip">下拉自动选</span></span></div>
+        <div class="row"><span class="k">期望工作城市</span><span class="v fill">成都、北京<span class="chip">多选</span></span></div>
+        <div class="row"><span class="k">实习经历</span><span class="v fill">3 段已填充</span></div>
+        <div class="row"><span class="k">项目经历</span><span class="v fill">4 段已填充</span></div>
+        <div class="row"><span class="k">到岗时间</span><span class="v fill">一个月内<span class="chip">日历</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap stats">
+    <div class="stat"><b class="gradtext">12+</b><span>主流校招平台深度适配</span></div>
+    <div class="stat"><b class="gradtext">95%+</b><span>字段自动填充完成度</span></div>
+    <div class="stat"><b class="gradtext">0 次</b><span>自动提交 / 投递（安全可控）</span></div>
+  </div>
+</section>
+
+<!-- PAIN -->
+<section style="padding-top:10px">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="ey">Why</div>
+      <h2>秋招填表，到底有多折磨</h2>
+      <p>同一份简历，要在十几家公司的校招系统里机械地重填一遍。</p>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div>
+        <h3>重复填表</h3>
+        <p>姓名、教育、实习、项目……几十个字段，每家系统重填一遍，机械、枯燥、费时。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l3 3 7-7"/></svg></div>
+        <h3>选项类卡死</h3>
+        <p>下拉、单选、城市多选、日期日历……大量非文本字段只能手动一个个点，极易漏填错填。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>怕填错漏填</h3>
+        <p>手填到深夜眼睛都花了，还总担心哪个必填项漏了、哪个选项点错，提心吊胆。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="ey">Features</div>
+      <h2>核心功能</h2>
+      <p>不是通用脚本，而是针对每家校招系统的表单结构逐一攻破。</p>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+        <h3>全字段一键填充</h3>
+        <p>文本、下拉、单选、多选、日期日历、文件上传区，覆盖简历全板块，一次到位。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 17l-6.5 5 2-7L2 9h7z"/></svg></div>
+        <h3>大厂深度适配</h3>
+        <p>针对 Moka / 北森 Phoenix / 飞书 ud__select / 京东 Ant Design / 腾讯 / 拼多多 等组件库定制策略。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 9a9 9 0 0 0-15-3M4 15a9 9 0 0 0 15 3"/></svg></div>
+        <h3>多轮智能补填</h3>
+        <p>一轮填完自动核验、缺哪补哪，多轮迭代把完成度稳定推到 95% 以上。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg></div>
+        <h3>只填不提交</h3>
+        <p>严格只填充、不点提交 / 投递、不碰验证码，安全边界清晰，最终由你手动确认。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3>本地隐私优先</h3>
+        <p>简历档案只存在你本机浏览器（chrome.storage），不上传任何服务器，数据始终在你手里。</p>
+      </div>
+      <div class="card">
+        <div class="ic grad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+        <h3>投递进度追踪</h3>
+        <p>内置 tracker，标黄查漏，随时知道哪些站填了、哪些还空着，复盘一目了然。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="ey">How it works</div>
+      <h2>四步，从打开到填完</h2>
+      <p>你负责导入数据和最终确认，重复的活交给我们。</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n grad"></div><h4>导入简历档案</h4><p>把你的简历数据存进插件（本机存储），只做一次。</p></div>
+      <div class="step"><div class="n grad"></div><h4>打开校招系统</h4><p>进入任意已适配平台的简历编辑页，插件自动识别。</p></div>
+      <div class="step"><div class="n grad"></div><h4>一键填充</h4><p>插件逐字段填充文本 / 下拉 / 多选 / 日历，多轮补填到高完成度。</p></div>
+      <div class="step"><div class="n grad"></div><h4>人工收尾</h4><p>你只需复核、补填个别特殊项、手动点提交。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section id="platforms">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="ey">Supported</div>
+      <h2>已深度适配的平台</h2>
+      <p>持续扩充中 —— 你的目标公司若在列，开箱即用。</p>
+    </div>
+    <div class="plats">
+      <span class="plat"><span class="b"></span>字节跳动</span>
+      <span class="plat"><span class="b"></span>腾讯</span>
+      <span class="plat"><span class="b"></span>京东</span>
+      <span class="plat"><span class="b"></span>拼多多</span>
+      <span class="plat"><span class="b"></span>蔚来</span>
+      <span class="plat"><span class="b"></span>小鹏</span>
+      <span class="plat"><span class="b"></span>大疆</span>
+      <span class="plat"><span class="b"></span>安踏</span>
+      <span class="plat"><span class="b"></span>元戎智行</span>
+      <span class="plat"><span class="b"></span>速腾聚创</span>
+      <span class="plat"><span class="b"></span>阶跃星辰</span>
+      <span class="plat"><span class="b"></span>容知日新</span>
+      <span class="plat"><span class="b"></span>半亩花田（北森）</span>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section id="tech" style="padding-top:10px">
+  <div class="wrap">
+    <div class="tech">
+      <div class="ey">Under the hood</div>
+      <h2>技术亮点</h2>
+      <div class="tech-grid">
+        <div class="titem"><div class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 17l-6.5 5 2-7L2 9h7z"/></svg></div><div><h4>AI 协作从 0 到 1</h4><p>用 AI agent 协作完成需求拆解、DOM 识别逻辑设计与代码落地，从零打造。</p></div></div>
+        <div class="titem"><div class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg></div><div><h4>规则 + DOM 智能识别</h4><p>不依赖大模型推理，而是规则驱动 + 智能元素识别，稳定可控、结果可解释。</p></div></div>
+        <div class="titem"><div class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div><h4>跨站深度适配</h4><p>针对每家平台组件库（Phoenix / Element / Ant Design / 飞书 ud__select 等）定制填充策略。</p></div></div>
+        <div class="titem"><div class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><div><h4>隐私本地化</h4><p>简历数据存于浏览器本地，零上传；插件只做填充，不替你决策提交。</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section>
+  <div class="wrap">
+    <div class="band">
+      <h2>把这个重复活，交给一键自动化</h2>
+      <p>开源、免费、本地优先。把时间留给真正重要的准备。</p>
+      <div class="cta">
+        <a class="btn btn-primary grad" href="https://github.com/AriaYang-333/qiuzhao-autofill/releases" target="_blank" rel="noopener">下载插件</a>
+        <a class="btn btn-ghost" href="https://github.com/AriaYang-333/qiuzhao-autofill" target="_blank" rel="noopener">查看源码</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>© 2026 秋招网申助手 · 用 AI 协作打造的智能求职效率产品</div>
+    <div class="home">个人主页：<a href="https://ariayang-333.github.io/YanliuYang/" target="_blank" rel="noopener">ariayang-333.github.io/YanliuYang</a></div>
+  </div>
+</footer>
+
+</body>
+</html>
